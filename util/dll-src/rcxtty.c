@@ -36,17 +36,24 @@
  *	<paolo.masetti@itlug.org>
  *
  */
+/*
+ * Taiichi added "#ifndef Native_Win32 ... #endif".
+ * Taiichi added debug write code for function mywrite.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#ifndef Native_Win32
 #include <unistd.h>
+#endif
 
 #if defined(_WIN32)
   #include <windows.h>
 #else
   #include <termios.h>
   #include <string.h>
+  #include <errno.h>
 #endif
 
 #include "rcxtty.h"
@@ -72,12 +79,47 @@ void myperror(char *str) {
 int mywrite(FILEDESCR fd, const void *buf, size_t len) {
 #if defined(_WIN32)
     DWORD nBytesWritten=0;
+    /* 
+    int i;
+    unsigned char *bbuf = (unsigned char*)buf;
+    fprintf(stderr,"\nmywrite (%d, ..., %d)\n", (int)fd, (int)len);
+    for (i = 0; i < len; i++) {
+        fprintf(stderr,"%02x ", bbuf[i]);
+        if (((i+1) % 16) == 0) fprintf(stderr,"\n");
+    }
+    fprintf(stderr,"\n");
+    */
+
     if (WriteFile(fd, buf, len, &nBytesWritten, NULL))
       return nBytesWritten;
     else
       return -1;
 #else
-    return write(fd, buf, len);
+   /* For usb tower, the driver, legousbtower, uses interrupt  */
+   /* urb which can only carry up to 8 bytes at a time. To     */
+   /* transmit more we have to check and send the rest.  It is */
+   /* a good thing to check, so I'll make it general.          */
+   
+   int actual = 0;
+   int rc;
+   char * cptr;
+   int retry = 1000;
+   
+   if (len < 1) return len;
+   cptr = (char *) buf;
+   while (actual < len) {
+      rc = (long) write(fd, cptr+actual, len-actual);
+      if (rc == -1) {
+	 if ((errno == EINTR) || (errno == EAGAIN))  {
+	    rc = 0;
+	    usleep(10);
+	    retry --;
+	 } else return -1;
+      }
+      actual += rc;
+      if (retry < 1) return actual;
+   }
+   return len;
 #endif
 }
 
@@ -124,7 +166,7 @@ int rcxInit(const char *tty, int highspeed)
   }
 
 #if !defined(_WIN32)
-  if (!isatty(fd)) {
+  if (tty_usb == 0 && !isatty(fd)) {
     close(fd);
     fprintf(stderr, "%s: not a tty\n", tty);
     return -1;
@@ -172,6 +214,7 @@ int rcxInit(const char *tty, int highspeed)
   }
   rcxFd=fd;
 #else
+  if (tty_usb == 0) {
   memset(&ios, 0, sizeof(ios));
   ios.c_cflag = CREAD | CLOCAL | CS8 | (highspeed ? 0 : PARENB | PARODD);
 
@@ -181,6 +224,7 @@ int rcxInit(const char *tty, int highspeed)
   if (tcsetattr(fd, TCSANOW, &ios) == -1) {
     perror("tcsetattr");
     exit(1);
+  }
   }
   rcxFd=fd;
 #endif

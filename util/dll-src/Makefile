@@ -3,6 +3,7 @@
 ###  FILE: util/dll-src/Makefile - make program download & link support utilities
 ###  brickOS - the independent LEGO Mindstorms OS
 ### --------------------------------------------------------------------------
+# Taiichi changed the value of CFLAGS.
 
 # specify environment before including the common stuff
 BUILDING_HOST_UTILS = true
@@ -32,7 +33,10 @@ LIBS=
 #
 # Martin Cornelius solution to include problems (avoid -I/usr/include)
 #
+# Taiichi (
+#CFLAGS+=-I. -I$(BRICKOS_ROOT)/include/lnp  -D_WIN32
 CFLAGS+=-I. -I$(BRICKOS_ROOT)/include/lnp
+# )
 
 all::  $(ALL_TARGETS)
 	@# nothing to do here but do it silently

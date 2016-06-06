@@ -22,14 +22,23 @@
  *
  *  Contributor(s): everyone discussing LNP at LUGNET
  */
+/*
+ * Taiichi added "#ifndef Native_Win32 ... #endif".
+ * Taiichi added functions htons and ntohs.
+ * Taiichi added code for Native_Win32 in function lx_write.
+ */
  
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef Native_Win32
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
+#ifndef Native_Win32
 #include <netinet/in.h>
+#endif
 #include <string.h>
 
 #include <lx.h>
@@ -46,11 +55,30 @@
     close(fd); \
     return rc; \
   }
+
+#ifdef Native_Win32
+/* These definitions only make sense on a little endian machine. */
+short htons(short val)
+{
+    /* bytes swap short */
+    return ((val & 0xff) << 8) | ((val >> 8) & 0xff);
+}
+
+short ntohs(short val)
+{
+    /* bytes swap short */
+    return ((val & 0xff) << 8) | ((val >> 8) & 0xff);
+}
+#endif
   
   
 int lx_write(const lx_t *lx,const unsigned char *filename) {
 #if defined(_WIN32)
+#ifdef Native_Win32
+  int i,rc,fd=open(filename,O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0777);
+#else		     
   int i,rc,fd=open(filename,O_WRONLY | O_CREAT | O_TRUNC | O_BINARY,S_IRUSR | S_IWUSR | S_IRGRP);
+#endif		     
 #else
   int i,rc,fd=creat(filename,S_IRUSR | S_IWUSR | S_IRGRP);
 #endif

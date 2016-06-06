@@ -22,6 +22,9 @@
  *
  *  Contributor(s): 
  */
+/*
+ * Taiichi removed "static" for the function keepaliveSend.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +65,7 @@ void keepaliveRenew()
 }
 
 //! send keepalive byte & renew keepalive
-static void keepaliveSend(FILEDESCR fd)
+void keepaliveSend(FILEDESCR fd)
 {
   if (verbose_flag)
     fputs("\nKeepAliveSend: keeping the IR tower alive...",stderr);

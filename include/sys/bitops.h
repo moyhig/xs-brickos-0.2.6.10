@@ -23,6 +23,10 @@
  *  Contributor(s): Markus L. Noga <markus@noga.de>
  */
 
+/*
+ * Taiichi modified the definition of ASMCONST.
+ */
+
 #ifndef __sys_bitops_h__
 #define __sys_bitops_h__
 
@@ -42,7 +46,10 @@ extern "C" {
 #ifdef CXX
 # define ASMCONST
 #else
-# define ASMCONST const
+// Taiichi (
+//# define ASMCONST const
+# define ASMCONST
+// )
 #endif
 
 //

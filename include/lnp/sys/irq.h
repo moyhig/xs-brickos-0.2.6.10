@@ -29,6 +29,10 @@
  *  Contributor(s): Markus L. Noga <markus@noga.de>
  */
 
+/*
+ * Taiichi added "#ifndef Native_Win32 ... #endif".
+ */
+
 #ifndef __sys_irq_h__
 #define __sys_irq_h__
 
@@ -95,6 +99,7 @@ extern void rom_dummy_handler(); //!< address of an RTS instruction
 ///////////////////////////////////////////////////////////////////////
 
 //! disable interrupt processing
+#ifndef Native_Win32    
 extern inline void disable_irqs() {
   __asm__ __volatile__("\torc  #0x80,ccr\n":::"cc");
 }
@@ -103,6 +108,7 @@ extern inline void disable_irqs() {
 extern inline void enable_irqs() {
   __asm__ __volatile__("\tandc #0x7f,ccr\n":::"cc");
 }
+#endif    
 
 #ifdef  __cplusplus
 }

@@ -26,6 +26,10 @@
  *  Contributor(s): Markus L. Noga <markus@noga.de>
  */
 
+/*
+ * Taiichi made "extern volatile time_t sys_time;" effective.
+ */
+
 #ifndef __time_h__
 #define __time_h__
 
@@ -67,7 +71,7 @@ typedef unsigned long time_t;
 //
 ///////////////////////////////////////////////////////////////////////
 
-//extern volatile time_t sys_time;	//!< current system time
+extern volatile time_t sys_time;	//!< current system time
 // use get_system_up_time() instead of accessing sys_time directly.
 time_t get_system_up_time(void);
 

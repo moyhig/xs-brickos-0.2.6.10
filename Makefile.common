@@ -8,6 +8,10 @@
 #
 #  Define our default install locations (overridden by packaging systems)
 #
+
+# Taiichi changed the values of TOOLPREFIX & BRICKOS_ROOT.
+# Taiichi commented out "ensureConfigured".
+
 prefix = /usr/local
 exec_prefix = ${prefix}
 PACKAGE = brickos
@@ -35,13 +39,20 @@ pkgexampledir = $(pkgdocdir)/examples
 #
 #  BEGIN-configuration insert (do not remove this line)
 # -------------------------------------------------------
-TOOLPREFIX=/usr/h8300-hitachi-hms/bin/h8300-hitachi-hms-
+# Taiichi (
+#TOOLPREFIX=/usr/h8300-hitachi-hms/bin/h8300-hitachi-hms-
+TOOLPREFIX=/usr/local/bin/h8300-hms-
+# )
 SED_SFLAG=
 EXT=
 CC=cc
 CFLAGS=-O2 -Wall
 MAKEDEPEND=$(CC) -M
-BRICKOS_ROOT=
+# Taiichi (
+#BRICKOS_ROOT=
+#BRICKOS_ROOT=/home/jkf/brick/brickos-0.2.6.10
+BRICKOS_ROOT=/home/lab4/yuasa/legOS/brick
+# )
 # -------------------------------------------------------
 #  END-configuration insert  (do not remove this line)
 #
@@ -49,7 +60,10 @@ BRICKOS_ROOT=
 #
 #  test to ensure that user has run configure before building
 #
-all depend:: ensureConfigured
+# Taiichi (
+#all depend:: ensureConfigured
+all depend:: # ensureConfigured
+# )
 
 ensureConfigured:
 	@if [ ! -f $(BRICKOS_ROOT)/.configured.flg ]; then \

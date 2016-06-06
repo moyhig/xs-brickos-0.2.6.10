@@ -65,15 +65,24 @@
  *
  */
 
+/*
+ * Taiichi added "#ifndef Native_Win32 ... #endif".
+ * Taiichi added fflush(stderr) in function image_dl.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#ifndef Native_Win32
 #include <unistd.h>
 #include <termios.h>
+#endif
 #include <stdio.h>
 #include <string.h>
+#ifndef Native_Win32
 #include <sys/time.h>
+#endif
 #include <ctype.h>
 #include <string.h>
 #include <assert.h>
@@ -260,10 +269,12 @@ void image_dl(FILEDESCR fd, unsigned char *image, int len, unsigned short start,
 
     /* Transfer data */
     fprintf(stderr, "\rTransferring \"%s\" to RCX...\n", filename);
+    fflush(stderr);
     addr = 0;
     index = 1;
     for (addr = 0, index = 1; addr < len; addr += size, index++) {
 	fprintf(stderr,"\r%3d%%        \r",(100*addr)/len);
+	fflush(stderr);
 	size = len - addr;
 	send[0] = 0x45;
 	if (index & 1)
@@ -296,7 +307,7 @@ void image_dl(FILEDESCR fd, unsigned char *image, int len, unsigned short start,
     send[2] = 69;		// 'E'
     send[3] = 71;		// 'G'
     send[4] = 79;		// 'O'
-    send[5] = 174;	// '®'
+    send[5] = 174;	// '
 
     /* Use longer timeout so ROM has time to checksum firmware */
     if (rcx_sendrecv(fd, send, 6, recv, 26, 150, RETRIES, use_comp) != 26) {
@@ -389,6 +400,8 @@ int main (int argc, char **argv)
 	    "      --tty=TTY    assume tower connected to TTY\n"
 #if defined(_WIN32)
 	    "      --tty=usb    assume tower connected to USB\n"
+#else
+	    "                   (if device name contains \"usb\", use USB mode)\n"
 #endif
 	    "  -h, --help       display this help and exit\n"
 	    ;
@@ -417,6 +430,17 @@ int main (int argc, char **argv)
 		fprintf(stderr, "Hary Mahesan - USB IR Tower Mode.\n");
 	tty = "\\\\.\\legotower1"; // Set the correct usb tower if you have more than one (unlikely).
     }
+#elif defined(LINUX) || defined(linux)
+    /* If the tty string contains "usb", e.g. /dev/usb/lego0, we */
+    /* assume it is the USB tower.  If you use something else that doesn't */
+    /* have "usb" in the device name, link it.  /dev/usb/lego0 is the */
+    /* name of the dirver installed by LegoUSB */
+    /* (http://legousb.sourceforge.net) */
+    if (strstr(tty,"usb") !=0) {
+       tty_usb=1;
+       if (__comm_debug)
+	 fprintf(stderr, "P.C. Chan & Tyler Akins - USB IR Tower Mode for Linux.\n");
+    }   
 #endif
 
     if (use_fast && (tty_usb==0)) { //For now, run USB only at 2400bps (slow mode).

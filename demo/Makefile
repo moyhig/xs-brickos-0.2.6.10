@@ -4,11 +4,17 @@
 ###  brickOS - the independent LEGO Mindstorms OS
 ### --------------------------------------------------------------------------
 
+# Taiichi changed the value of PROGRAMS.
+# Taiichi commented out "all clean realclean depend:: ...".
+
 # name for the brickOS kernel
 # #LIBDIR#         ###   DO NOT REMOVE THIS LINE  ###
 KERNEL=../boot/brickOS
 
-PROGRAMS=helloworld.lx rover.lx linetrack.lx robots.lx c++.lx sound.lx trailerbot.lx
+# Taiichi (
+#PROGRAMS= helloworld.lx rover.lx linetrack.lx robots.lx c++.lx sound.lx trailerbot.lx
+PROGRAMS= helloworld.lx rover.lx linetrack.lx robots.lx sound.lx trailerbot.lx
+# )
 
 # extra dynamic sources
 DOBJECTS=
@@ -19,8 +25,8 @@ include ../Makefile.common
 include ../Makefile.user
 
 #  for these targets, pass them on to C++ dir, too
-all clean realclean depend::
-	$(MAKE) -C c++ $@
+#all clean realclean depend::
+#	$(MAKE) -C c++ $@
 
 .depend: *.c
 	$(MAKEDEPEND) *.c > .depend

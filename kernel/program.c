@@ -38,6 +38,9 @@
  *
  *  - Added Remote key handler
  */
+/*
+ * Taiichi added "#ifdef CONF_VIEW_BUTT ... #endif".
+ */
 
 #include <sys/program.h>
 
@@ -434,6 +437,7 @@ gotkey:
 
         }
         break;
+#ifdef CONF_VIEW_BUTT
       case KEY_VIEW:
          // works only if no programs are running.
         if (nb_tasks > nb_system_tasks)
@@ -482,6 +486,7 @@ gotkey:
 
         clear=1;
         break;
+#endif /* CONF_VIEW_BUTT */	
     }
 
     if(clear) {

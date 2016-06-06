@@ -22,6 +22,9 @@
  *
  *  Contributor(s): Markus L. Noga <markus@noga.de>
  */
+/*
+ * Taiichi made a fix for function mm_free_mem(void).
+ */
 
 #include <sys/mm.h>
 
@@ -291,8 +294,8 @@ int mm_free_mem(void) {
   for (ptr = mm_first_free; 
        ptr >= &mm_start; 
        ptr += *(ptr+1) + MM_HEADER_SIZE)
-    free += *(ptr+1);
-
+    if (*ptr==MM_FREE) free += *(ptr+1);  /* Taiichi fixed */
+  
 #ifdef CONF_TM
   LEAVE_KERNEL_CRITICAL_SECTION();
 #endif    

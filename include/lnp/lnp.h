@@ -23,6 +23,10 @@
  *  Contributor(s): Markus L. Noga <markus@noga.de>
  */
 
+/*
+ * Taiichi added "#ifndef Native_Win32 ... #endif".
+ */
+
 #ifndef __lnp_h__
 #define __lnp_h__
 
@@ -98,6 +102,7 @@ extern lnp_remote_handler_t lnp_remote_handler;
 ///////////////////////////////////////////////////////////////////////
 
 //! set the integrity layer packet handler
+#ifndef Native_Win32    
 extern inline void lnp_integrity_set_handler(lnp_integrity_handler_t handler)
 {
   lnp_integrity_handler = handler;
@@ -116,6 +121,7 @@ extern inline void lnp_set_hostaddr(unsigned char host)
 {
     lnp_hostaddr = ((host << 4) & CONF_LNP_HOSTMASK);
 }
+#endif
 
 #ifdef CONF_RCX_PROTOCOL
 //! set the remote packet handler

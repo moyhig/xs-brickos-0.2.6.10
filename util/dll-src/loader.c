@@ -56,13 +56,21 @@
  *	<paolo.masetti@itlug.org>
  *
  */
+/*
+ * Taiichi added "#ifndef Native_Win32 ... #endif".
+ * Taiichi copied the definition of lnp_addressing_set_handler from lnp.h.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef Native_Win32
 #include <unistd.h>
+#endif
 #include <string.h>
 #include <fcntl.h>
+#ifndef Native_Win32
 #include <sys/time.h>
+#endif
 #include <sys/types.h>
 #include <signal.h>
 #include <errno.h>
@@ -175,10 +183,25 @@ int lnp_logical_write(const void *data, size_t length) {
 
   // transmit
   //
+#if defined(LINUX) || defined(linux)
+   if (tty_usb == 0)
+#endif
   keepaliveRenew();
 
   return mywrite(rcxFD(), data, length)!=length;
 }
+
+#ifdef Native_Win32
+// Taiichi copied the following definition from lnp.h
+// since it's an inline there.
+
+void lnp_addressing_set_handler(unsigned char port, lnp_addressing_handler_t handler)
+{
+  if (!(port & CONF_LNP_HOSTMASK))	// sanity check.
+
+    lnp_addressing_handler[port] = handler;
+}
+#endif
 
 //! send a LNP layer 0 packet of given length
 /*! \return 0 on success.
@@ -306,6 +329,11 @@ void LNPinit(const char *tty) {
     myperror("opening tty");
     exit(1);
   }
+
+#if defined(LINUX) || defined(linux)
+  if (tty_usb == 0) {
+#endif
+
   keepaliveInit();
    
   // wait for IR to settle
@@ -318,13 +346,19 @@ void LNPinit(const char *tty) {
          	  now.tv_usec - timeout.tv_usec;
       
   } while(diff < 100000);
+#if defined(LINUX) || defined(linux)
+  }
+#endif
 #if defined(_WIN32)
   PurgeComm(rcxFD(), PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_RXCLEAR);
 #else
+#if defined(LINUX) || defined(linux)
+   if (tty_usb == 0)
+#endif
   read(rcxFD(),buffer,256);
 #endif
 }
-    
+
 void ahandler(const unsigned char *data,unsigned char len,unsigned char src) {
   if(*data==CMDacknowledge) {
     receivedAck=1;
@@ -438,6 +472,8 @@ int main(int argc, char **argv) {
 	"  -t<comport>  , --tty=<comport>       set IR Tower com port <comport>\n"
 #if defined(_WIN32)
 	"  -t<usb>      , --tty=<usb>           set IR Tower USB mode \n"
+#else
+        "                                       (if \"usb\" is in the port, use USB mode)\n"
 #endif
 	"  -i<0/1>      , --irmode=<0/1>        set IR mode near(0)/far(1) on RCX\n"
 	"  -e           , --execute             execute program after download\n"
@@ -480,6 +516,16 @@ int main(int argc, char **argv) {
 		fputs("\n\n Hary Mahesan - LEGO USB IR Tower Mode\n\n",stderr);
 	tty="\\\\.\\legotower1"; // Set the correct usb tower if you have more than one (unlikely).
   }
+#elif defined(LINUX) || defined(linux)
+   /* If the tty string contains "usb", e.g. /dev/usb/lego0, we */
+   /* assume it is the USB tower.  /dev/usb/lego0 is the default name of */
+   /* the device in the LegoUSB (http://legousb.sourceforge.net) project. */
+   /* If yours doesn't contain the "usb" string, just link it. */
+   if (strstr(tty,"usb") !=0) {
+       tty_usb=1;
+       if (verbose_flag)
+           fputs("\nC.P. Chan & Tyler Akins - USB IR Tower Mode for Linux.\n",stderr);
+   }
 #endif
 
   LNPinit(tty);

@@ -35,20 +35,28 @@
  *	<paolo.masetti@itlug.org>
  *
  */
+/*
+ * Taiichi added "#ifndef Native_Win32 ... #endif".
+ */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#ifndef Native_Win32
 #include <unistd.h>
 #include <termios.h>
 #include <sys/time.h>
+#endif
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
 #if defined(_WIN32)
   #include <windows.h>
+#else
+  #include <sys/ioctl.h>
+  #include <errno.h>
 #endif
 
 #include "rcx_comm.h"
@@ -99,6 +107,11 @@ static int nbread (FILEDESCR fd, void *buf, int maxlen, int timeout)
 {
     char *bufp = (char *)buf;
     int len = 0;
+#if defined(LINUX) | defined(linux)
+   int count;
+   fd_set fds;
+   struct timeval tv;
+#endif
 
     while (len < maxlen) {
 
@@ -157,28 +170,43 @@ static int nbread (FILEDESCR fd, void *buf, int maxlen, int timeout)
         }
 	}
 #else
-	int count;
-	fd_set fds;
-	struct timeval tv;
+     if (tty_usb == 1)
+	 {
+	    // LegoUSB doesn't work with select(), so just set a read
+	    // timeout and then later check to see if the read timed out
+	    // without reading data.
 
-	FD_ZERO(&fds);
-	FD_SET(fd, &fds);
+	    ioctl(fd, _IOW('u', 0xc8, int), timeout);
+	 }
+     else
+	 {
+		FD_ZERO(&fds);
+		FD_SET(fd, &fds);
 
-	tv.tv_sec = timeout / 1000;
-	tv.tv_usec = (timeout % 1000) * 1000;
+		tv.tv_sec = timeout / 1000;
+		tv.tv_usec = (timeout % 1000) * 1000;
 
-	if (select(fd+1, &fds, NULL, NULL, &tv) < 0) {
-	    perror("select");
-	    exit(1);
-	}
+		if (select(fd+1, &fds, NULL, NULL, &tv) < 0) {
+		    perror("select");
+		    exit(1);
+		}
+		if (!FD_ISSET(fd, &fds))
+		    break;
+		}
 
-	if (!FD_ISSET(fd, &fds))
-	    break;
+		count = read(fd, &bufp[len], maxlen - len);
 
-	if ((count = read(fd, &bufp[len], maxlen - len)) < 0) {
-	    perror("read");
-	    exit(1);
-	}
+	    // If no data was read from a USB tower and the read() timed out,
+		// go ahead and assume we are done reading data.
+        if (tty_usb == 1 && count == -1 && errno == ETIMEDOUT) 
+		{
+			break;
+		}
+	
+		if (count < 0) {
+		    perror("read");
+		    exit(1);
+		}
 
         len += count;
 #endif
@@ -210,7 +238,31 @@ int mywrite(FILEDESCR fd, const void *buf, size_t len) {
     WriteFile(fd, buf, len, &nBytesWritten, NULL);
     return nBytesWritten;
 #else
-    return write(fd, buf, len);
+   /* For usb tower, the driver, legousbtower, uses interrupt  */
+   /* urb which can only carry up to 8 bytes at a time. To     */
+   /* transmit more we have to check and send the rest.  It is */
+   /* a good thing to check, so I'll make it general.          */
+
+   int actual = 0;
+   int rc;
+   char * cptr;
+   int retry = 1000;
+
+   if (len < 1) return len;
+   cptr = (char *) buf;
+   while (actual < len) {
+     rc = (long) write(fd, cptr+actual, len-actual);
+     if (rc == -1) {
+       if ((errno == EINTR) || (errno == EAGAIN))  {
+         rc = 0;
+         usleep(10);
+         retry --;
+       } else return -1;
+     }
+     actual += rc;
+     if (retry < 1) return actual;
+   }
+   return len;
 #endif
 }
 
@@ -264,12 +316,14 @@ FILEDESCR rcx_init(char *tty, int is_fast)
     } // usb
 
 #else
-
+    // have linux platform I/O
     if ((fd = open(tty, O_RDWR)) < 0) {
 	perror(tty);
 	exit(1);
     }
 
+    if (tty_usb == 0){
+    
     if (!isatty(fd)) {
 	close(fd);
 	fprintf(stderr, "%s: not a tty\n", tty);
@@ -292,6 +346,7 @@ FILEDESCR rcx_init(char *tty, int is_fast)
     if (tcsetattr(fd, TCSANOW, &ios) == -1) {
 	perror("tcsetattr");
 	exit(1);
+    }
     }
 #endif
 

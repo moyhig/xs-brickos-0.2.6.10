@@ -23,6 +23,13 @@
  *  Contributor(s): Markus L. Noga <markus@noga.de>
  */
 
+/*
+ * Taiichi commented out #define's for
+ *   CONF_SETJMP, CONF_CRITICAL_SECTIONS, CONF_VIS,
+ *   CONF_RCX_PROTOCOL, CONF_LR_HANDLER, and CONF_RCX_MESSAGE.
+ * Taiichi #define'ed CONF_VIEW_BUTT but commented it out.
+ */
+
 #ifndef __config_h__
 #define __config_h__
 
@@ -37,12 +44,14 @@
 #define CONF_TM                         //!< task management
 #define CONF_AUTOSHUTOFF                //!< power down after x min of inactivity
 //#define CONF_TM_DEBUG                   //!< view key shows current instruction pointer
-#define CONF_SETJMP			//!< non local goto
+// #define CONF_SETJMP			//!< non local goto
 #define CONF_SEMAPHORES                 //!< POSIX semaphores
-#define CONF_CRITICAL_SECTIONS          //!< Critical Section support
+// #define CONF_CRITICAL_SECTIONS          //!< Critical Section support
 #define CONF_PROGRAM                    //!< dynamic program loading support
-#define CONF_VIS                        //!< generic visualization.
+// #define CONF_VIS                        //!< generic visualization.
 //#define CONF_ROM_MEMCPY                 //!< Use the ROM memcpy routine
+
+// #define CONF_VIEW_BUTT                 //!< view button info
 
 // networking services
 //
@@ -58,9 +67,9 @@
 
 // remote control services
 //
-#define CONF_RCX_PROTOCOL               //!< RCX protocol handler
-#define CONF_LR_HANDLER                 //!< remote control keys handler service
-#define CONF_RCX_MESSAGE                //!< standard firmware message service
+// #define CONF_RCX_PROTOCOL               //!< RCX protocol handler
+// #define CONF_LR_HANDLER                 //!< remote control keys handler service
+// #define CONF_RCX_MESSAGE                //!< standard firmware message service
 
 // drivers
 //

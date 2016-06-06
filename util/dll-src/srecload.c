@@ -37,6 +37,9 @@
  *  kekoa@graphics.stanford.edu
  *  10/3/98
  */
+/*
+ * Taiichi modified function symbols_load.
+ */
  
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,7 +79,7 @@ static int symbols_load(image_t *img,FILE *file) {
   // read in symbols
   //
   while(doubledollar<2 && fgets(buf, 80, file)) {
-    int i;
+    int i, j;
     line++;
 
     // skip empty lines
@@ -104,15 +107,31 @@ static int symbols_load(image_t *img,FILE *file) {
       // read symbol
       //
       symbol=buf+i;
-      while(buf[i] && buf[i]!=' ')
-	i++;
-      if(buf[i]!=' ' || buf[i+1]!='$') {
-	fprintf(stderr,"malformed symbolsrec file at line %d\n",line);
-	exit(-1);
+
+// Taiichi (
+//      while(buf[i] && buf[i]!=' ')
+//	i++;
+//      if(buf[i]!=' ' || buf[i+1]!='$') { 
+//	fprintf(stderr,"malformed symbolsrec file at line %d\n",line);
+//	exit(-1);
+//      }
+      /* skip to next cr */
+
+      j=0;
+      
+      while(buf[i] && (buf[i] != '\r')) {
+	  if (buf[i] == ' ') {
+	      buf[i] = 0;
+	      j= i+1;
+	  }
+	      
+	  i++;
       }
+// )
       buf[i]=0;
       
-      address=(unsigned short) strtoul(buf+i+2,NULL,16);
+      address=(unsigned short) strtoul(buf+j,NULL,16);
+      /* printf("sym %s, addr 0x%x\n", symbol, address);   */
   
       // retain relevant offsets
       //

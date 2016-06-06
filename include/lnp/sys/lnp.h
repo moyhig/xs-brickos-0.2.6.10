@@ -23,6 +23,11 @@
  *  Contributor(s): Markus L. Noga <markus@noga.de>
  */
 
+/*
+ * Taiichi added "#define LNP_HOSTADDR ... ".
+ * Taiichi added "#ifndef Native_Win32 ... #endif".
+ */
+
 #ifndef __sys_lnp_h__
 #define __sys_lnp_h__
 
@@ -40,6 +45,7 @@ extern "C" {
 //
 ///////////////////////////////////////////////////////////////////////
 
+#define LNP_HOSTADDR  	CONF_LNP_HOSTADDR   //!< the LNP host address (config.h)
 #define LNP_HOSTMASK  CONF_LNP_HOSTMASK   //!< the LNP host mask (config.h)
 
 //! LNP port mask is derived from host mask
@@ -137,9 +143,11 @@ __attribute__ ((rcx_interrupt))
 //! return whether a packet is currently being received
 /*! \return 1 if yes, else zero
 */
+#ifndef Native_Win32    
 extern inline int lnp_integrity_active(void) {
   return lnp_integrity_state!=LNPwaitHeader;
 }
+#endif
 
 //! reset the inter-byte timeout counter.
 extern void lnp_timeout_reset(void)
@@ -152,9 +160,11 @@ __attribute__ ((rcx_interrupt))
 //! value.
 /*! \param  timeout the new timeout value
 */
+#ifndef Native_Win32    
 extern inline void lnp_timeout_set(unsigned short timeout) {
   lnp_timeout_counter=lnp_timeout=timeout;
 }
+#endif    
 
 //! Initialise protocol handlers
 /*! Adressing port 0 is reserved for the program handler.
